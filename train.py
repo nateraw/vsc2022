@@ -7,6 +7,7 @@ from src.data import get_dataset
 from src.lightning_simsiam import LitSimSiam
 from src.transforms import get_transform
 
+
 def main(
     data_dir: str = "/home/paperspace/Documents/meta-video-similarity/data/train/reference",
     model_name_or_path: str = "MCG-NJU/videomae-base",
@@ -39,6 +40,7 @@ def main(
         log_every_n_steps=10,
     )
     trainer.fit(model, loader)
+
 
 if __name__ == "__main__":
     main()

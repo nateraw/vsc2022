@@ -3,12 +3,12 @@
 # Check that source code meets quality standards
 
 quality:
-	black --check .
-	isort --check-only .
-	flake8 .
+	black --check . src
+	isort --check-only . src
+	flake8 . src
 
 # Format source code automatically
 
 style:
-	black .
-	isort .
+	black . src
+	isort . src

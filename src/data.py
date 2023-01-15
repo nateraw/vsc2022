@@ -17,13 +17,13 @@ class LimitDataset(Dataset):
     def __init__(self, dataset, transform=None, clips_per_sample=1):
         super().__init__()
         self.dataset = dataset
-        self.clips_per_sample=clips_per_sample
+        self.clips_per_sample = clips_per_sample
         self.dataset_iter = itertools.chain.from_iterable(itertools.repeat(iter(dataset), 2))
         self.transform = transform
 
     def __getitem__(self, index):
         ex = next(self.dataset_iter)
-        x1, x2 = ex['video'], ex['video']
+        x1, x2 = ex["video"], ex["video"]
         if self.transform is not None:
             x1 = self.transform(x1)
             x2 = self.transform(x2)
@@ -33,7 +33,15 @@ class LimitDataset(Dataset):
         return self.dataset.num_videos * self.clips_per_sample
 
 
-def get_dataset(video_dir: str, mode: str = 'train', num_clip_frames=16, frame_sample_rate=4, fps=30, decoder='pyav', val_clips_per_video=3) -> Dataset:
+def get_dataset(
+    video_dir: str,
+    mode: str = "train",
+    num_clip_frames=16,
+    frame_sample_rate=4,
+    fps=30,
+    decoder="pyav",
+    val_clips_per_video=3,
+) -> Dataset:
     """Get dataset for training or testing.
 
     Args:
@@ -47,7 +55,7 @@ def get_dataset(video_dir: str, mode: str = 'train', num_clip_frames=16, frame_s
     clip_duration = samples_per_clip / fps
 
     video_dir = Path(video_dir)
-    video_file_paths = sorted(video_dir.glob('*.mp4'))
+    video_file_paths = sorted(video_dir.glob("*.mp4"))
 
     video_sampler = RandomSampler if mode == "train" else SequentialSampler
     if torch.distributed.is_available() and torch.distributed.is_initialized():
@@ -57,14 +65,16 @@ def get_dataset(video_dir: str, mode: str = 'train', num_clip_frames=16, frame_s
     ds = LimitDataset(
         LabeledVideoDataset(
             LabeledVideoPaths(
-                [(str(video_path), {'label': -1}) for video_path in video_file_paths],
+                [(str(video_path), {"label": -1}) for video_path in video_file_paths],
             ),
-            clip_sampler=make_clip_sampler("random", clip_duration) if mode == "train" else make_clip_sampler("constant_clips_per_video", clip_duration, val_clips_per_video),
+            clip_sampler=make_clip_sampler("random", clip_duration)
+            if mode == "train"
+            else make_clip_sampler("constant_clips_per_video", clip_duration, val_clips_per_video),
             video_sampler=video_sampler,
-            transform=None, # We apply these in the limit dataset
+            transform=None,  # We apply these in the limit dataset
             decode_audio=False,
             decoder=decoder,
         ),
-        transform=get_transform(mode)
+        transform=get_transform(mode),
     )
     return ds

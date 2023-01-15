@@ -3,7 +3,8 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 import torch
-from PIL import ImageDraw
+import torchvision
+from PIL import Image, ImageDraw, ImageFilter
 from pytorchvideo.transforms import (
     ApplyTransformToKey,
     Div255,
@@ -16,13 +17,7 @@ from pytorchvideo.transforms import (
     UniformTemporalSubsample,
 )
 from torchvision.transforms import CenterCrop, Compose, RandomHorizontalFlip, RandomVerticalFlip
-import random
-from typing import Any, Callable, Dict, List
 
-import torch
-import torchvision
-from PIL import Image, ImageFilter
-from torchvision.transforms import Compose
 
 # This file contains some stuff from pytorchvideo's trainer utilities.
 # TODO - use some augly transforms to better match dataset distribution
@@ -136,6 +131,7 @@ class ApplyTransformToKeyOnList:
         x[self._key] = [self._transform(a) for a in x[self._key]]
         return x
 
+
 class ColorJitterVideoSSl:
     """
     A custom sequence of transforms that randomly performs Color jitter,
@@ -171,17 +167,11 @@ class ColorJitterVideoSSl:
             [
                 torchvision.transforms.ToPILImage(),
                 torchvision.transforms.RandomApply(
-                    [
-                        torchvision.transforms.ColorJitter(
-                            bri_con_sat[0], bri_con_sat[1], bri_con_sat[2], hue
-                        )
-                    ],
+                    [torchvision.transforms.ColorJitter(bri_con_sat[0], bri_con_sat[1], bri_con_sat[2], hue)],
                     p=p_color_jitter,
                 ),
                 torchvision.transforms.RandomGrayscale(p=p_convert_gray),
-                torchvision.transforms.RandomApply(
-                    [GaussianBlur(gaussian_blur_sigma)], p=p_gaussian_blur
-                ),
+                torchvision.transforms.RandomApply([GaussianBlur(gaussian_blur_sigma)], p=p_gaussian_blur),
                 torchvision.transforms.ToTensor(),
             ]
         )
