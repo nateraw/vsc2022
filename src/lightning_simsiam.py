@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 from transformers import get_cosine_schedule_with_warmup
 
-from modeling_simsiam import SimSiam
+from .modeling_simsiam import SimSiam
 
 
 class LitSimSiam(pl.LightningModule):
