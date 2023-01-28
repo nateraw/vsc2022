@@ -1,16 +1,12 @@
 import pytorch_lightning as pl
 import torch
-from transformers import get_cosine_schedule_with_warmup
-
-from .modeling_simsiam import SimSiam
+from transformers import get_cosine_schedule_with_warmup, VideoMAEForPreTraining
 
 
-class LitSimSiam(pl.LightningModule):
+class LitVideoMAEForPretraining(pl.LightningModule):
     def __init__(
         self,
         model_name_or_path="MCG-NJU/videomae-base",
-        dim=2048,
-        pred_dim=512,
         lr=0.05,
         momentum=0.9,
         weight_decay=1e-4,
@@ -19,13 +15,11 @@ class LitSimSiam(pl.LightningModule):
     ):
         super().__init__()
         self.save_hyperparameters()
-        self.model = SimSiam(self.hparams.model_name_or_path, self.hparams.dim, self.hparams.pred_dim)
-        self.criterion = torch.nn.CosineSimilarity(dim=1)
+        self.model = VideoMAEForPreTraining.from_pretrained(self.hparams.model_name_or_path)
 
     def training_step(self, batch, batch_idx, optimizer_idx=None):
-        x1, x2 = batch
-        p1, p2, z1, z2 = self.model(x1, x2)
-        loss = -(self.criterion(p1, z2).mean() + self.criterion(p2, z1).mean()) * 0.5
+        outputs = self.model(**batch)
+        loss = outputs.loss
         self.log("loss", loss)
         return loss
 
