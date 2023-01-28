@@ -12,6 +12,7 @@ class LitVideoMAEForPretraining(pl.LightningModule):
         weight_decay=1e-4,
         batch_size=512,
         warmup_steps=0,
+        **kwargs,
     ):
         super().__init__()
         self.save_hyperparameters()

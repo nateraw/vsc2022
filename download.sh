@@ -8,9 +8,9 @@
 # Download the data
 # reference - 59.4 GB with 40,311 object
 # query - 13.8 GB with 8404 objects
-TRAIN_DATA_DIR=./data/train/reference
+TRAIN_DATA_DIR=./data/train/
 mkdir -p $TRAIN_DATA_DIR
-aws s3 cp s3://drivendata-competition-meta-vsc-data-us/train/reference $TRAIN_DATA_DIR --recursive --region us-east-1 --no-sign-request
+aws s3 cp s3://drivendata-competition-meta-vsc-data-us/train/ $TRAIN_DATA_DIR --recursive --region us-east-1 --no-sign-request
 
 
 # TEST_DATA_DIR=./data/test

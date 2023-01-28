@@ -37,7 +37,7 @@ def get_dataset(
     num_clip_frames=16,
     frame_sample_rate=4,
     fps=30,
-    decoder="pyav",
+    decoder="pyav",  # 2:44 to get to 500 steps on A100 instance w/ pyav.
     val_clips_per_video=3,
 ) -> Dataset:
     """Get dataset for training or testing.

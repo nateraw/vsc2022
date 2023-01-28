@@ -1,0 +1,10 @@
+torch
+torchvision
+transformers
+pytorchvideo
+decord
+av==9.2.0
+pytorch-lightning
+numpy
+pandas
+fire

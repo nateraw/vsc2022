@@ -1,4 +1,4 @@
-# TODO - placeholder for now
+import json
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -8,35 +8,42 @@ from src.lightning_pretrain_videomae import LitVideoMAEForPretraining
 from src.transforms import get_transform
 
 import torch
+
+torch.set_float32_matmul_precision("medium")
+
 def main(
     data_dir: str = "./data/train/reference",
     model_name_or_path: str = "MCG-NJU/videomae-base",
-    lr: float = 0.05,
+    lr: float = 1.5e-4,
     momentum: float = 0.9,
-    weight_decay: float = 1.5e-4,
-    batch_size: int = 4,
-    warmup_steps: int = 0,
-    num_workers: int = 4,
+    weight_decay: float = 0.05,
+    batch_size: int = 32,
+    warmup_steps: int = 200,
+    num_workers: int = 30,
     num_clip_frames=16,
     frame_sample_rate=4,
     use_wandb=False,
     wandb_project="vsc2022-videomae-pretrain",
+    wandb_run_name=None,
+    max_epochs=100,
+    log_every_n_steps=5,
+    mask_ratio=0.75,
+    accumulate_grad_batches=1,
+    precision='bf16', # 'bf16'
+    devices=1,
 ):
+    # print all the provided args
+    cfg = locals()
+    print('-' * 80)
+    print(json.dumps(cfg, indent=2, sort_keys=False))
+    print('-' * 80)
+
     ds = get_dataset(data_dir, num_clip_frames=num_clip_frames, frame_sample_rate=frame_sample_rate)
-    model = LitVideoMAEForPretraining(
-        model_name_or_path=model_name_or_path,
-        lr=lr,
-        momentum=momentum,
-        weight_decay=weight_decay,
-        batch_size=batch_size,
-        warmup_steps=warmup_steps,
-    )
+    model = LitVideoMAEForPretraining(**cfg)
 
     num_patches_per_frame = (model.model.config.image_size // model.model.config.patch_size) ** 2
     seq_length = (num_clip_frames // model.model.config.tubelet_size) * num_patches_per_frame
-    mask_ratio = 0.9
     num_masks = int(mask_ratio * seq_length)
-    print("num masks: ", num_masks)
 
     def collate_fn(batch):
         # tublet size = 2
@@ -57,12 +64,17 @@ def main(
     loader = DataLoader(ds, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=True, collate_fn=collate_fn,)
 
     trainer = pl.Trainer(
-        devices=1,
+        devices=devices,
         accelerator="gpu",
-        precision=16,
-        log_every_n_steps=10,
-        max_epochs=300,
+        precision=precision,
+        log_every_n_steps=log_every_n_steps,
+        max_epochs=max_epochs,
+        callbacks=[
+            pl.callbacks.LearningRateMonitor(logging_interval="step"),
+            pl.callbacks.ModelCheckpoint(dirpath='pretrain_model_outputs', save_top_k=4, monitor='loss', mode='min', save_last=True),
+        ],
         logger=not use_wandb or pl.loggers.WandbLogger(project=wandb_project, log_model=False, save_code=False, name=wandb_run_name),
+        accumulate_grad_batches=accumulate_grad_batches,
     )
     trainer.fit(model, loader)
 
